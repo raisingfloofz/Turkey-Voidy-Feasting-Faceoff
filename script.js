@@ -70,5 +70,39 @@ function complete(){if(!active||stage!=='plate'||judging)return;
  },5100);
 }
 function finish(win){if(!active||finishing)return;$('showdown').hidden=true;$('recipeModal').hidden=true;document.body.classList.remove('compactCooking');finishing=true;const m=mode;reset();write('turkeyVoidyCoins',read('turkeyVoidyCoins')+earned);if(m==='rush'&&score>read('turkeyVoidyBest'))write('turkeyVoidyBest',score);$('resultTitle').textContent=m==='faceoff'?(win?'Turkey Voidy Wins!':'Family Wins This Round!'):m==='free'?'Kitchen Closed!':'Dinner Rush Complete!';$('resultText').textContent=m==='faceoff'?(win?'Turkey Voidy finished five dishes first!':'Your family chef won the race. Try again!'):'What a delicious Thanksgiving feast!';$('resultNumbers').textContent=score+' dishes completed · +'+earned+' coins';show('results')}
-$('fridge').onclick=()=>{if(stage==='ingredient')openFridge()};$('ovenDoor').onclick=()=>{if(stage==='oven'&&ovenOpen)insertDish();else if(stage==='remove'&&ovenOpen)removeDish();else toggleOven()};let dishDown=null;$('dish').addEventListener('pointerdown',e=>{if(stage==='oven'&&ovenOpen){dishDown={x:e.clientX,y:e.clientY};$('dish').setPointerCapture(e.pointerId)}});$('dish').addEventListener('pointerup',e=>{if(!dishDown)return;const r=$('oven').getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom)insertDish();dishDown=null});$('board').onclick=()=>{if(stage==='prep')prepTap();else if(stage==='plate')complete()};document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>start(b.dataset.mode));$('homeBtn').onclick=()=>{if(active)finish(false);else home()};$('quitBtn').onclick=()=>finish(false);$('skipBtn').onclick=()=>{if(mode==='free'&&active){$('recipeModal').hidden=false;token++;clearInterval(cookTimer);$('oven').classList.remove('cooking');setStage('idle');current=null;trayClear();actions();$('order').textContent='Choose a recipe';instruction('Choose another dish below.');$('dish').textContent='🍽️';$('ovenWindow').textContent='♨'}};$('closeRecipes').onclick=()=>{$('recipeModal').hidden=true};$('againBtn').onclick=()=>start(lastMode);$('backBtn').onclick=home;home();
+$('fridge').onclick=()=>{if(stage==='ingredient')openFridge()};$('ovenDoor').onclick=()=>{if(stage==='oven'&&ovenOpen)insertDish();else if(stage==='remove'&&ovenOpen)removeDish();else toggleOven()};let dishDown=null,dragGhost=null;
+function clearDishDrag(){
+ dragGhost?.remove();dragGhost=null;dishDown=null;
+ $('oven').classList.remove('dropTarget');
+}
+$('dish').addEventListener('pointerdown',e=>{
+ if(!active||stage!=='oven'||!ovenOpen)return;
+ e.preventDefault();
+ dishDown={id:e.pointerId,x:e.clientX,y:e.clientY};
+ try{$('dish').setPointerCapture(e.pointerId)}catch{}
+ dragGhost=document.createElement('div');
+ dragGhost.className='foodDragGhost';
+ dragGhost.textContent=current.ingredient;
+ dragGhost.style.left=e.clientX+'px';
+ dragGhost.style.top=e.clientY+'px';
+ document.body.appendChild(dragGhost);
+});
+$('dish').addEventListener('pointermove',e=>{
+ if(!dishDown||e.pointerId!==dishDown.id)return;
+ e.preventDefault();
+ if(dragGhost){dragGhost.style.left=e.clientX+'px';dragGhost.style.top=e.clientY+'px'}
+ const r=$('oven').getBoundingClientRect();
+ $('oven').classList.toggle('dropTarget',e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom);
+});
+$('dish').addEventListener('pointerup',e=>{
+ if(!dishDown||e.pointerId!==dishDown.id)return;
+ e.preventDefault();
+ const r=$('oven').getBoundingClientRect();
+ const hit=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
+ clearDishDrag();
+ if(hit)insertDish();
+ else instruction('Drag the food from the board into the open oven!');
+});
+$('dish').addEventListener('pointercancel',clearDishDrag);
+;$('board').onclick=()=>{if(stage==='prep')prepTap();else if(stage==='plate')complete()};$('dish').addEventListener('click',e=>{e.stopPropagation();if(stage==='prep')prepTap();else if(stage==='plate')complete()});document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>start(b.dataset.mode));$('homeBtn').onclick=()=>{if(active)finish(false);else home()};$('quitBtn').onclick=()=>finish(false);$('skipBtn').onclick=()=>{if(mode==='free'&&active){$('recipeModal').hidden=false;token++;clearInterval(cookTimer);$('oven').classList.remove('cooking');setStage('idle');current=null;trayClear();actions();$('order').textContent='Choose a recipe';instruction('Choose another dish below.');$('dish').textContent='🍽️';$('ovenWindow').textContent='♨'}};$('closeRecipes').onclick=()=>{$('recipeModal').hidden=true};$('againBtn').onclick=()=>start(lastMode);$('backBtn').onclick=home;home();
 })();
