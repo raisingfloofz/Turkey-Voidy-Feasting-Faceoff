@@ -20,6 +20,7 @@ function openFridge(){
  item.setAttribute('role','button');item.setAttribute('tabindex','0');
  item.setAttribute('aria-label','Move '+current.name+' ingredient to cutting board');
  $('bowl').replaceChildren(item);$('bowl').classList.add('hasIngredient');
+ item.addEventListener('click',()=>{if(stage==='ingredient')takeIngredient()});
  item.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();takeIngredient()}});
  let origin=null,ghost=null;
  item.addEventListener('pointerdown',e=>{
