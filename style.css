@@ -141,3 +141,7 @@ body.compactCooking #play .speech{font-size:clamp(11px,3vw,15px);max-width:min(5
 #play .chef,#play .chef img{pointer-events:none!important}
 #play .oven.dropTarget{outline:5px solid #8bef6e;filter:brightness(1.15)}
 .foodDragGhost{position:fixed;z-index:10000;pointer-events:none;transform:translate(-50%,-50%);font-size:54px;filter:drop-shadow(0 5px 6px #0008)}
+
+/* Simple tap-to-move ingredient button: no dragging required. */
+#play .tapIngredient{appearance:none;border:2px solid #9d592b;border-radius:50%;background:#ffe3a0;box-shadow:0 3px #965c37;padding:3px;min-width:52px;min-height:52px;font-size:32px;touch-action:manipulation!important;cursor:pointer;pointer-events:auto!important;position:relative;z-index:30}
+#play .tapIngredient:active{transform:scale(.93)}
