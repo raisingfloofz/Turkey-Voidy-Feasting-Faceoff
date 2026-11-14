@@ -13,41 +13,19 @@ function pickRandom(){pick(recipes[Math.floor(Math.random()*recipes.length)])}
 function pick(r){dishStarted=Date.now();token++;clearInterval(cookTimer);$('oven').classList.remove('cooking');ovenOpen=false;$('ovenDoor').classList.remove('open');current=r;round++;actionIndex=actionCount=0;$('order').textContent=(mode==='free'?'Recipe: ':'Dish #'+round+': ')+r.emoji+' '+r.name;$('dish').textContent='🍽️';progress(0);speech('Let’s get cooking!');[...$('recipeButtons').children].forEach((b,i)=>b.classList.toggle('selected',recipes[i]===r));setStage('ingredient');instruction('Tap the fridge to collect '+r.name.toLowerCase()+' ingredients!');actions();trayClear()}
 function openFridge(){
  if(!active||stage!=='ingredient')return;
- instruction('Drag the ingredient from the bowl onto the cutting board!');
+ instruction('Tap the item to move it over');
  actions();trayClear();
- const item=document.createElement('span');
- item.className='counterIngredient';item.textContent=current.ingredient;
- item.setAttribute('role','button');item.setAttribute('tabindex','0');
- item.setAttribute('aria-label','Move '+current.name+' ingredient to cutting board');
+ const item=document.createElement('button');
+ item.type='button';item.className='counterIngredient tapIngredient';
+ item.textContent=current.ingredient;
+ item.setAttribute('aria-label','Move '+current.name+' to the cutting board');
+ item.addEventListener('click',e=>{e.stopPropagation();takeIngredient()});
  $('bowl').replaceChildren(item);$('bowl').classList.add('hasIngredient');
- item.addEventListener('click',()=>{if(stage==='ingredient')takeIngredient()});
- item.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();takeIngredient()}});
- let origin=null,ghost=null;
- item.addEventListener('pointerdown',e=>{
-   if(stage!=='ingredient')return;
-   e.preventDefault();origin={x:e.clientX,y:e.clientY};
-   item.setPointerCapture(e.pointerId);
-   ghost=item.cloneNode(true);ghost.className='ingredientGhost';
-   document.body.appendChild(ghost);ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
- });
- item.addEventListener('pointermove',e=>{
-   if(!origin||!ghost)return;
-   ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
-   $('board').classList.toggle('dropTarget',insideBoard(e.clientX,e.clientY));
- });
- item.addEventListener('pointerup',e=>{
-   if(!origin)return;
-   const hit=insideBoard(e.clientX,e.clientY);
-   ghost?.remove();ghost=null;origin=null;$('board').classList.remove('dropTarget');
-   if(hit)takeIngredient();else instruction('Drag the ingredient onto the cutting board!');
- });
- item.addEventListener('pointercancel',()=>{ghost?.remove();ghost=null;origin=null;$('board').classList.remove('dropTarget')});
 }
-function insideBoard(x,y){const r=$('board').getBoundingClientRect();return x>=r.left&&x<=r.right&&y>=r.top&&y<=r.bottom}
 function takeIngredient(){if(stage!=='ingredient')return;trayClear();$('dish').textContent=current.ingredient;setStage('prep');actionIndex=actionCount=0;renderPrep()}
 function renderPrep(){if(!active||stage!=='prep')return;if(actionIndex>=current.actions.length){setStage('oven');instruction('Open the oven door, then put your dish inside.');speech('Ready for the oven!');progress(0);actions();return}const name=current.actions[actionIndex],needed=6;instruction(name+' — tap the food on the cutting board!');actions();progress(0)}
 function prepTap(){if(stage!=='prep'||!active)return;actionCount++;$('dish').style.transform='rotate('+((actionCount%2?1:-1)*8)+'deg) scale(1.07)';setTimeout(()=>$('dish').style.transform='',120);progress(actionCount/6*100);if(actionCount>=6){actionIndex++;actionCount=0;speech('Looking delicious!');renderPrep()}}
-function toggleOven(){if(!active||!['oven','remove'].includes(stage))return;ovenOpen=!ovenOpen;$('ovenDoor').classList.toggle('open',ovenOpen);if(stage==='oven'){if(ovenOpen){instruction('Oven open! Drag the food into the oven, or tap the oven again.');actions();$('dish').classList.add('readyToDrag')}else{instruction('Open the oven door to put the dish inside.');actions()}}else if(stage==='remove'){if(ovenOpen){instruction('Oven open! Tap the oven to take out your food.');actions()}else{instruction('Open the oven to remove your food.');actions()}}}
+function toggleOven(){if(!active||!['oven','remove'].includes(stage))return;ovenOpen=!ovenOpen;$('ovenDoor').classList.toggle('open',ovenOpen);if(stage==='oven'){if(ovenOpen){instruction('Tap the item to move it over');actions();$('dish').classList.add('readyToDrag')}else{instruction('Open the oven door to put the dish inside.');actions()}}else if(stage==='remove'){if(ovenOpen){instruction('Oven open! Tap the oven to take out your food.');actions()}else{instruction('Open the oven to remove your food.');actions()}}}
 function insertDish(){if(stage!=='oven'||!ovenOpen)return;ovenOpen=false;$('ovenDoor').classList.remove('open');$('oven').classList.add('cooking');$('ovenWindow').textContent=current.emoji;$('dish').textContent='🥣';$('dish').classList.remove('readyToDrag');setStage('cooking');cookLeft=current.cook;const id=token;instruction('Your '+current.name.toLowerCase()+' is baking! '+cookLeft+'s remaining.');speech('Watch that oven!');actions();progress(0);cookTimer=setInterval(()=>{if(!active||id!==token)return;--cookLeft;progress((current.cook-cookLeft)/current.cook*100);instruction('Baking '+current.name.toLowerCase()+'... '+Math.max(0,cookLeft)+'s');if(cookLeft<=0){clearInterval(cookTimer);$('oven').classList.remove('cooking');setStage('remove');instruction('Ding! Open the oven and remove the dish!');speech('It’s ready!');actions()}},1000)}
 function removeDish(){if(stage!=='remove'||!ovenOpen)return;ovenOpen=false;$('ovenDoor').classList.remove('open');$('ovenWindow').textContent='♨';$('dish').textContent=current.emoji;setStage('plate');instruction('Plate your finished '+current.name.toLowerCase()+'!');speech('Almost done!');instruction('Tap the food on the board to plate and serve!');actions();progress(100)}
 function complete(){if(!active||stage!=='plate'||judging)return;
@@ -70,39 +48,5 @@ function complete(){if(!active||stage!=='plate'||judging)return;
  },5100);
 }
 function finish(win){if(!active||finishing)return;$('showdown').hidden=true;$('recipeModal').hidden=true;document.body.classList.remove('compactCooking');finishing=true;const m=mode;reset();write('turkeyVoidyCoins',read('turkeyVoidyCoins')+earned);if(m==='rush'&&score>read('turkeyVoidyBest'))write('turkeyVoidyBest',score);$('resultTitle').textContent=m==='faceoff'?(win?'Turkey Voidy Wins!':'Family Wins This Round!'):m==='free'?'Kitchen Closed!':'Dinner Rush Complete!';$('resultText').textContent=m==='faceoff'?(win?'Turkey Voidy finished five dishes first!':'Your family chef won the race. Try again!'):'What a delicious Thanksgiving feast!';$('resultNumbers').textContent=score+' dishes completed · +'+earned+' coins';show('results')}
-$('fridge').onclick=()=>{if(stage==='ingredient')openFridge()};$('ovenDoor').onclick=()=>{if(stage==='oven'&&ovenOpen)insertDish();else if(stage==='remove'&&ovenOpen)removeDish();else toggleOven()};let dishDown=null,dragGhost=null;
-function clearDishDrag(){
- dragGhost?.remove();dragGhost=null;dishDown=null;
- $('oven').classList.remove('dropTarget');
-}
-$('dish').addEventListener('pointerdown',e=>{
- if(!active||stage!=='oven'||!ovenOpen)return;
- e.preventDefault();
- dishDown={id:e.pointerId,x:e.clientX,y:e.clientY};
- try{$('dish').setPointerCapture(e.pointerId)}catch{}
- dragGhost=document.createElement('div');
- dragGhost.className='foodDragGhost';
- dragGhost.textContent=current.ingredient;
- dragGhost.style.left=e.clientX+'px';
- dragGhost.style.top=e.clientY+'px';
- document.body.appendChild(dragGhost);
-});
-$('dish').addEventListener('pointermove',e=>{
- if(!dishDown||e.pointerId!==dishDown.id)return;
- e.preventDefault();
- if(dragGhost){dragGhost.style.left=e.clientX+'px';dragGhost.style.top=e.clientY+'px'}
- const r=$('oven').getBoundingClientRect();
- $('oven').classList.toggle('dropTarget',e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom);
-});
-$('dish').addEventListener('pointerup',e=>{
- if(!dishDown||e.pointerId!==dishDown.id)return;
- e.preventDefault();
- const r=$('oven').getBoundingClientRect();
- const hit=e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;
- clearDishDrag();
- if(hit)insertDish();
- else instruction('Drag the food from the board into the open oven!');
-});
-$('dish').addEventListener('pointercancel',clearDishDrag);
-;$('board').onclick=()=>{if(stage==='prep')prepTap();else if(stage==='plate')complete()};$('dish').addEventListener('click',e=>{e.stopPropagation();if(stage==='prep')prepTap();else if(stage==='plate')complete()});document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>start(b.dataset.mode));$('homeBtn').onclick=()=>{if(active)finish(false);else home()};$('quitBtn').onclick=()=>finish(false);$('skipBtn').onclick=()=>{if(mode==='free'&&active){$('recipeModal').hidden=false;token++;clearInterval(cookTimer);$('oven').classList.remove('cooking');setStage('idle');current=null;trayClear();actions();$('order').textContent='Choose a recipe';instruction('Choose another dish below.');$('dish').textContent='🍽️';$('ovenWindow').textContent='♨'}};$('closeRecipes').onclick=()=>{$('recipeModal').hidden=true};$('againBtn').onclick=()=>start(lastMode);$('backBtn').onclick=home;home();
+$('fridge').onclick=()=>{if(stage==='ingredient')openFridge()};$('ovenDoor').onclick=()=>{if(stage==='oven'&&ovenOpen)insertDish();else if(stage==='remove'&&ovenOpen)removeDish();else toggleOven()};$('board').onclick=()=>{if(stage==='prep')prepTap();else if(stage==='plate')complete()};$('dish').addEventListener('click',e=>{e.stopPropagation();if(stage==='prep')prepTap();else if(stage==='plate')complete();else if(stage==='oven'&&ovenOpen)insertDish()});document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>start(b.dataset.mode));$('homeBtn').onclick=()=>{if(active)finish(false);else home()};$('quitBtn').onclick=()=>finish(false);$('skipBtn').onclick=()=>{if(mode==='free'&&active){$('recipeModal').hidden=false;token++;clearInterval(cookTimer);$('oven').classList.remove('cooking');setStage('idle');current=null;trayClear();actions();$('order').textContent='Choose a recipe';instruction('Choose another dish below.');$('dish').textContent='🍽️';$('ovenWindow').textContent='♨'}};$('closeRecipes').onclick=()=>{$('recipeModal').hidden=true};$('againBtn').onclick=()=>start(lastMode);$('backBtn').onclick=home;home();
 })();
