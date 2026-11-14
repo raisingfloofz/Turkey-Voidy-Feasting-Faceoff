@@ -106,3 +106,17 @@ body.compactCooking #play .speech{font-size:clamp(11px,3vw,15px);max-width:min(5
 @keyframes slideVoidy{from{transform:translateX(-110vw)}to{transform:translateX(0)}}
 @keyframes slideBrisket{from{transform:translateX(110vw)}to{transform:translateX(0)}}
 @keyframes winnerPop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:scale(1)}}
+
+/* Hands-on kitchen: ingredients live in the counter bowl; no floating action blips. */
+#play .controlPanel{display:none!important}
+#play .kitchen{flex:1 1 auto;min-height:0}
+#play .bowl{position:relative;display:flex;align-items:center;justify-content:center}
+#play .bowl.hasIngredient{background:#fff1c680;border-radius:50%;outline:2px dashed #ffda7d}
+#play .counterIngredient{display:grid;place-items:center;width:100%;height:100%;font-size:clamp(28px,8vw,49px);cursor:grab;touch-action:none;user-select:none;filter:drop-shadow(0 3px 3px #0005)}
+#play .counterIngredient:active{cursor:grabbing}
+.ingredientGhost{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-50%) scale(1.2);font-size:clamp(35px,10vw,60px);filter:drop-shadow(0 5px 5px #0007)}
+#play .board.dropTarget{outline:4px solid #77d35a;box-shadow:0 0 16px #88ff72}
+#play .board{cursor:pointer;touch-action:manipulation}
+#play .speech{z-index:20}
+#play .foot{position:absolute;top:83px;right:7px;bottom:auto;z-index:25}
+#play .foot button{font-size:10px;padding:5px 8px;opacity:.9}
