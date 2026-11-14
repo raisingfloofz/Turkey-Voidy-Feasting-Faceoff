@@ -120,3 +120,12 @@ body.compactCooking #play .speech{font-size:clamp(11px,3vw,15px);max-width:min(5
 #play .speech{z-index:20}
 #play .foot{position:absolute;top:83px;right:7px;bottom:auto;z-index:25}
 #play .foot button{font-size:10px;padding:5px 8px;opacity:.9}
+
+/* Touch drag fix: the countertop used to swallow pointer events. */
+#play .worktop{pointer-events:none}
+#play .workSurface{pointer-events:none}
+#play #bowl,#play #board,#play #dish,#play .counterIngredient{pointer-events:auto!important}
+#play #bowl{position:relative;z-index:10;min-width:46px;min-height:55px;touch-action:none}
+#play .counterIngredient{touch-action:none!important;cursor:grab;display:flex;align-items:center;justify-content:center;min-width:48px;min-height:48px}
+#play #board{position:relative;z-index:9;touch-action:manipulation}
+#play .controlPanel,#play #actions,#play #ingredientTray{display:none!important}
