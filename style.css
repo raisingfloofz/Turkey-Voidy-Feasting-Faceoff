@@ -129,3 +129,15 @@ body.compactCooking #play .speech{font-size:clamp(11px,3vw,15px);max-width:min(5
 #play .counterIngredient{touch-action:none!important;cursor:grab;display:flex;align-items:center;justify-content:center;min-width:48px;min-height:48px}
 #play #board{position:relative;z-index:9;touch-action:manipulation}
 #play .controlPanel,#play #actions,#play #ingredientTray{display:none!important}
+
+/* FIX: allow the board, food and ingredient to receive real pointer events.
+   Previously the entire counter surface disabled hit testing. */
+#play .worktop{pointer-events:auto!important}
+#play .workSurface{pointer-events:auto!important}
+#play #bowl,#play #board,#play #dish,#play .counterIngredient{pointer-events:auto!important}
+#play #dish{display:inline-grid;place-items:center;min-width:45px;min-height:45px;touch-action:none!important;user-select:none;cursor:grab}
+#play #board{touch-action:none!important;user-select:none}
+#play #bowl,#play .counterIngredient{touch-action:none!important;user-select:none}
+#play .chef,#play .chef img{pointer-events:none!important}
+#play .oven.dropTarget{outline:5px solid #8bef6e;filter:brightness(1.15)}
+.foodDragGhost{position:fixed;z-index:10000;pointer-events:none;transform:translate(-50%,-50%);font-size:54px;filter:drop-shadow(0 5px 6px #0008)}
